@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+    <title>Make - Berechnung Leitungsquerschnitt</title>
+        <style>
+            label {
+                display: inline-block;
+                width:  200px;
+                margin-bottom: : 50px;
+            }
+            .err {
+                padding: 20px;
+                background-color: #f44336;
+                color: white;
+                width: 650px;
+                margin: 2px;
+            }
+            .closebtn {
+              margin-left: 15px;
+              color: white;
+              font-weight: bold;
+              float: right;
+              font-size: 22px;
+              line-height: 20px;
+              cursor: pointer;
+              transition: 0.3s;
+            }
+            .closebtn:hover {
+              color: black;
+            }
+            @media print {
+                .noprint {
+                    display: none;
+                }
+            }
+        </style>
+        <script>
+        function currentSel(what) {
+            var secYpsilon = document.getElementById("secYpsilon");    
+            if (what==="DC") {
+                secYpsilon.style.display = "none";
+            }
+            if (what==="AC1") {
+                secYpsilon.style.display = "none";
+                document.getElementById("voltage").value = 230;
+            }
+            if (what==="AC3") {
+                secYpsilon.style.display = "inline-block";
+                document.getElementById("voltage").value = 400;
+            }
+            
+        }
+        function amperageSel(what) {
+            var secAmp = document.getElementById("secAmp");
+            var secPwr = document.getElementById("secPwr");
+            var secVlt = document.getElementById("secVoltage");
+            
+            if(what==="Amp") {
+                secAmp.style.display = "inline-block";
+                secPwr.style.display = "none";
+                if(document.getElementById("dropPercent").checked==false) {
+                    secVlt.style.display = "none";
+                }
+            }
+            if(what==="Pwr") {
+                secAmp.style.display = "none";
+                secPwr.style.display = "inline-block";
+                secVlt.style.display = "inline-block";
+            }
+        }
+        function dropSel(what) {
+            var secDropPercent = document.getElementById("secDropPercent");
+            var secDropAbs = document.getElementById("secDropAbs");
+            var secVlt = document.getElementById("secVoltage");
+            
+            if(what=='Percent') {
+                secDropPercent.style.display = "inline-block";
+                secVlt.style.display = "inline-block";
+                secDropAbs.style.display = "none";
+            }
+            if(what=='Abs') {
+                secDropPercent.style.display = "none";
+                if(document.getElementById("Pwr").checked==false) {
+                    secVlt.style.display = "none";
+                }
+                secDropAbs.style.display = "inline-block";
+            }
+        }
+        function roundUpAvail(value) {
+            if(value<1.5) {
+                return 1.5;
+            }
+            if(value<2.5) {
+                return 2.5;
+            }
+            if(value<4.0) {
+                return 4.0;
+            }
+            if(value<6.0) {
+                return 6.0;
+            }
+            if(value<10.0) {
+                return 10.0;
+            }
+            return("???");
+        }
+        function calc() {
+            var selectedAmp = false;
+            var selectedDrop = false;
+            var selectedFormula = false;
+            var valA;
+            var valPwr;
+            var valV;
+            var valDropV;
+            var valDropP;
+            var needToCalcAmpere=false;
+            var needtoCalcDrop=false;
+            var valL;
+            var valG;
+            var valY;
+            
+            document.getElementById("err01").style.display="none";
+            document.getElementById("err02").style.display="none";
+            document.getElementById("err03").style.display="none";
+            document.getElementById("calcDrop").style.display="none";
+            document.getElementById("calcAmpere").style.display="none";
+            document.getElementById("remark01").innerHTML="";
+            
+            valL = document.getElementById("length").value;
+            valG = document.getElementById("gamma").value;
+            valY = document.getElementById("ypsilon").value;
+            
+            
+            <!-- Schauen, ob die Grundlagen für die Berechnung gewählt wurden -->
+            if(document.getElementById("Amp").checked==true) {
+                selectedAmp = true;
+                valA = document.getElementById("valAmp").value;
+            }
+            if(document.getElementById("Pwr").checked==true) {
+                selectedAmp = true;
+                valPwr = document.getElementById("valPwr").value;
+                valV = document.getElementById("voltage").value;
+                needToCalcAmpere = true;
+            }
+            if(!selectedAmp) {
+                document.getElementById("err02").style.display="inline-block";
+            }
+            if(document.getElementById("dropPercent").checked==true) {
+                selectedDrop=true;
+                needtoCalcDrop=true;
+                valDropP = document.getElementById("valPercent").value;
+                valV = document.getElementById("voltage").value;
+            }
+            
+            if(document.getElementById("dropAbs").checked==true) {
+                selectedDrop=true;
+                valDropV = document.getElementById("valVolt").value;
+            }
+            if(!selectedDrop) {
+                document.getElementById("err03").style.display="inline-block";
+            }
+
+            if(needtoCalcDrop) {
+                valDropV = valV * valDropP / 100;
+                document.getElementById("resultDrop").innerHTML=valDropV.toFixed(2);
+                document.getElementById("calcDrop").style.display="inline-block";                
+            }
+            
+            if(document.getElementById("DC").checked==true) {
+                selectedFormula=true;
+                console.log("DC");
+                if(needToCalcAmpere) {
+                    valA = valPwr / valV;
+                    document.getElementById("resultAmpere").innerHTML=valA.toFixed(2);
+                    document.getElementById("calcAmpere").style.display="inline-block";                
+                }
+
+                var q = (2 * valL * valA) / (valG * valDropV);
+                var qAvail = roundUpAvail(q);
+                document.getElementById("resultDiameter").innerHTML=q.toFixed(2);
+                document.getElementById("calcDiameter").style.display="inline-block";                
+                document.getElementById("resultDiameterAvail").innerHTML=qAvail;
+            }
+            if(document.getElementById("AC1").checked==true) {
+                selectedFormula=true;
+                console.log("AC1");
+                if(needToCalcAmpere) {
+                    valA = valPwr / valV;
+                    document.getElementById("resultAmpere").innerHTML=valA.toFixed(2);
+                    document.getElementById("calcAmpere").style.display="inline-block";                
+                }
+                var q = (2 * valL * valA * Math.cos(valY)) / (valG * valDropV);
+                var qAvail = roundUpAvail(q);
+                document.getElementById("resultDiameter").innerHTML=q.toFixed(2);
+                document.getElementById("resultDiameterAvail").innerHTML=qAvail;
+                document.getElementById("calcDiameter").style.display="inline-block";                
+            }
+            if(document.getElementById("AC3").checked==true) {
+                selectedFormula=true;
+                console.log("AC3");
+                if(needToCalcAmpere) {
+                    valA = (valPwr / ((1/Math.sqrt(3)) * valV)) / 3;
+                    document.getElementById("resultAmpere").innerHTML=valA.toFixed(2);
+                    document.getElementById("calcAmpere").style.display="inline-block";
+                    document.getElementById("remark01").innerHTML=" pro Phase (bei 3 Phasen)"
+                }
+                var q = (Math.sqrt(3) * valL * valA * valY) / (valG * valDropV);
+                var qAvail = roundUpAvail(q);
+                document.getElementById("resultDiameter").innerHTML=q.toFixed(2);
+                document.getElementById("resultDiameterAvail").innerHTML=qAvail;
+                document.getElementById("calcDiameter").style.display="inline-block";                
+            }
+            if(!selectedFormula) {
+                document.getElementById("err01").style.display="inline-block";
+            }
+            
+        }
+            function print() {
+                window.print();
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Make - Berechnung Leitungsquerschnitt</h1>
+        <hr>
+        <p><b>Art der Spannung:</b></p>
+        <input type="radio" id="DC" name="current_type" value="DC" onclick="currentSel('DC');">
+        <label for="DC">Gleichstrom</label><br>
+        <input type="radio" id="AC1" name="current_type" value="AC1" onclick="currentSel('AC1');">
+        <label for="AC1">Wechselstrom (eine Phase)</label><br>
+        <input type="radio" id="AC3" name="current_type" value="AC3" onclick="currentSel('AC3');">
+        <label for="AC3">Drehstrom (3 Phasen)</label>
+        
+        <br><br>
+        <p><b>Angabe der Stromstärke:</b></p>
+        <input type="radio" id="Amp" name="power" value="Amp" onclick="amperageSel('Amp');">
+        <label for="Amp">direkt als Strom in Ampere</label><br>
+        <input type="radio" id="Pwr" name ="power" value="Pwr" onclick="amperageSel('Pwr');">
+        <label for="Pwr">indirekt als Leistung in Watt</label>
+        <br><br>
+        <p><b>Spannungsabfall in:</b></p>
+        <input type ="radio" id="dropPercent" name="voltage_drop" value="percent" onclick="dropSel('Percent');">
+        <label for="percent">Prozent</label>
+        <br>
+        <input type ="radio" id="dropAbs" name="voltage_drop" value="volt" onclick="dropSel('Abs');">
+        <label for="volt">Volt</label>
+        <br><br>
+        <hr>
+        <p><b>Eingaben für die Berechnung:</b></p>
+        <label for="length">Länge der Zuleitung</label>
+        <input type="number" id="length" value="">
+        <a>[Meter von Schaltkasten bis Verbraucher]</a>    
+        <br><br>
+        
+        <div id="secAmp" style="display: none;">
+            <label for="valAmp">Strom</label>   
+            <input type="number" id="valAmp" value="">
+            <a>[Ampere]</a>
+            <br>
+        </div>
+        <div id="secPwr" style="display: none;">
+            <label for="valWatts">Leistung</label>   
+            <input type="number" id="valPwr" value="">
+            <a>[Watt]</a>
+            <br>
+        </div>
+        <br><br>
+        <div id="secVoltage" style="display: none;">
+            <label for="power">Spannung</label> 
+            <input type="number" id="voltage" value="">
+            <a>[Volt]</a>
+            <br>
+        </div>
+        <br><br>
+        <div id="secDropPercent" style="display: none;">
+            <label for="valPercent">Spannungsabfall</label>
+            <input type="number" id="valPercent" value="">
+            <a>[Prozent]</a>
+            <br>
+        </div>
+        <div id="secDropAbs" style="display: none;">
+            <label for="valVolt">Spannungsabfall</label>
+            <input type="number" id="valVolt" value = "">
+            <a>[Volt]</a>
+            <br>
+        </div>
+        <br><br>
+        <label for="gamma">Leitfähigkeit</label>
+        <input type="number" id="gamma" value="57">
+        [&gamma;, Kupfer = 57]
+        <br>
+        <div id="secYpsilon" style="display: none;">
+        <label for="ypsilon">Phasenverschiebung</label>
+        <input type="number" id="ypsilon" value="1">
+        <a>[cos(&Upsilon;), 1 bei ohmscher Last, sonst Typenschild Verbraucher beachten]</a>
+        </div>
+        <br><br>
+        <button type="button" onclick="calc();">Berechnen</button>
+        <br><br>
+        <div id="err01" class="err" style="display: none;">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+            <strong>Problem:</strong> Bitte erst die Art der Spannung auswählen (Gleichstrom / Wechselstrom / Drehstrom)
+        </div>
+        <div id="err02" class="err" style="display: none;">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+            <strong>Problem:</strong> Bitte erst die Berechnung der Stromstärke auswählen (Ampere / Watt)
+        </div>
+        <div id="err03" class="err" style="display: none;">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+            <strong>Problem:</strong> Bitte erst die Berechnung des Spannungsabfalls auswählen (Prozent / Volt)
+        </div>
+
+
+        <hr>
+        <p><b>Ergebnis der Berechnung:</b></p>
+        <div id="calcDrop" style="display: none;">
+            <label style="width: 350px;">Berechneter Spannungsabfall</label>
+            <a id="resultDrop">0</a><a> Volt</a>
+            <br>
+        </div>  
+        <br><br>
+        <div id="calcAmpere" style="display: none;">
+            <label style="width: 350px;">Berechnete Stromstärke</label>
+            <a id="resultAmpere">0</a><a> Ampere</a><a id="remark01"></a>
+            <br>
+        </div>  
+        <br><br>
+        <div id="calcDiameter" style="display: none;">
+            <label style="width: 350px;">Berechneter Leitungsquerschnitt (pro Einzelader)</label>
+            <a id="resultDiameter">0</a><a> mm&sup2;</a><a id="remark02"></a>
+            <br><br>
+            <label style="width: 350px;">Nächster verfügbarer Leitungsquerschnitt (pro Ader)</label>
+            <a id="resultDiameterAvail">0</a><a> mm&sup2;</a><a id="remark02"></a>
+            <br><br>
+
+            <a>Berechnung ohne Gewähr, der Querschnitt muss auf den nächst höheren im Handel verfügbaren Querschnitt aufgerundet werden. Ggf. weitere Erhöhung erforderlich, wegen der mechanischen Belastbarkeit der Leitung.</a>
+            <br><br>
+            <button id="print" class="button noprint" onclick="print();">Drucken</button>
+        </div>  
+        
+    </body>
+</html>
